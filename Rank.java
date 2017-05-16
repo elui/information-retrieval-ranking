@@ -1,15 +1,17 @@
 package edu.stanford.cs276;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import com.sun.corba.se.spi.activation._ActivatorImplBase;
-
-import java.util.Comparator;
+import java.util.Set;
 
 import edu.stanford.cs276.util.Pair;
 
@@ -52,9 +54,10 @@ public class Rank {
 
 		//loop through urls for query, getting scores
 		for (Query query : queryDict.keySet()) {
-			if (total++ == 1) break;
+//			if (total++ == 1) break;
 			// Pair of url and ranked relevance.
 			List<Pair<Document,Double>> docAndScores = new ArrayList<Pair<Document,Double>>(queryDict.get(query).size());
+//			System.out.println("query: " + query);
 			for (String url : queryDict.get(query).keySet()) {
 				Document doc = queryDict.get(query).get(url);
 				//force debug string to be 1-line and truncate to only includes only first 200 characters for rendering purpose
@@ -62,6 +65,7 @@ public class Rank {
 				doc.debugStr = debugStr.substring(0, Math.min(debugStr.length(), 200));
 
 				double score = scorer.getSimScore(doc, query);
+//				System.out.println("query: " + query + " doc: " + doc.url + " score: " + score);
 				docAndScores.add(new Pair<Document, Double>(doc, score));
 			}
 
@@ -74,7 +78,7 @@ public class Rank {
 					 * Define a custom compare function to help sort urls
 					 * urls for a query based on scores.
 					 */
-					return 0;
+					return o1.getSecond() < o2.getSecond() ? 1 : o1.getSecond() == o2.getSecond() ? 0 : -1;
 				}
 			});
 
@@ -188,6 +192,20 @@ public class Rank {
 		} else {
 			idfs = LoadHandler.loadDFs(idfFile);
 		}
+		
+//		Pair<String, Double> bestScore = new Pair<String,Double>("", 0d);
+//		Pair<String, Double> lowestScore = new Pair<String,Double>("", 1d);
+//		for (String s : idfs.keySet()) {
+//			Double score = idfs.get(s);
+//			if (score > bestScore.getSecond()) {
+//				bestScore = new Pair<String,Double>(s, score);
+//			}
+//			if (score < lowestScore.getSecond()) {
+//				lowestScore = new Pair<String,Double>(s, score);
+//			}
+//		}
+//		System.out.println("best score term" + bestScore);
+//		System.out.println("lowest score term" + lowestScore + " num docs: " + idfs.keySet().size());
 
 		if (!(taskOption.equals("baseline") || taskOption.equals("cosine") || taskOption.equals("bm25")
 				|| taskOption.equals("extra") || taskOption.equals("window"))) {
@@ -207,11 +225,10 @@ public class Rank {
 		/* score documents for queries */
 		Map<Query,List<Document>> queryRankings = score(queryDict, taskOption, idfs);
 		/* print out ranking result, keep this stdout format in your submission */
-		printRankedResults(queryRankings);
+//		printRankedResults(queryRankings);
 
 		//print results and save them to file "ranked.txt" (to run with NdcgMain.java)
 		String outputFilePath = "ranked.txt";
 		writeRankedResultsToFile(queryRankings,outputFilePath);
-		System.out.println("total? : " + total);
 	}
 }

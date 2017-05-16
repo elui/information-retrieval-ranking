@@ -4,9 +4,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,161 +13,214 @@ import java.util.Map;
  */
 public class BM25Scorer extends AScorer {
 
-  /*
-   *  TODO: You will want to tune these values
-   */
-  double urlweight = 0.1;
-  double titleweight  = 0.1;
-  double bodyweight = 0.1;
-  double headerweight = 0.1;
-  double anchorweight = 0.1;
-  
-  // BM25-specific weights
-  double burl = 0.1;
-  double btitle = 0.1;
-  double bheader = 0.1;
-  double bbody = 0.1;
-  double banchor = 0.1;
-  
-  double k1 = 0.1;
-  double pageRankLambda = 0.1;
-  double pageRankLambdaPrime = 0.1;
-  
-  // query -> url -> document
-  Map<Query,Map<String, Document>> queryDict; 
+	/*
+	 *  TODO: You will want to tune these values
+	 */
+	double urlweight = 0.1;
+	double titleweight  = 0.1;
+	double bodyweight = 0.1;
+	double headerweight = 0.1;
+	double anchorweight = 0.1;
 
-  // BM25 data structures--feel free to modify these
-  // Document -> field -> length
-  Map<Document,Map<String,Double>> lengths;  
+	// BM25-specific weights
+	double burl = 0.1;
+	double btitle = 0.1;
+	double bheader = 0.1;
+	double bbody = 0.1;
+	double banchor = 0.1;
 
-  // field name -> average length
-  Map<String,Double> avgLengths;    
+	double k1 = 0.1;
+	double pageRankLambda = 0.1;
+	double pageRankLambdaPrime = 0.1;
 
-  // Document -> pagerank score
-  Map<Document,Double> pagerankScores; 
-  
-    /**
-     * Construct a BM25Scorer.
-     * @param idfs the map of idf scores
-     * @param queryDict a map of query to url to document
-     */
-    public BM25Scorer(Map<String,Double> idfs, Map<Query,Map<String, Document>> queryDict) {
-      super(idfs);
-      this.queryDict = queryDict;
-      this.calcAverageLengths();
-    }
+	// query -> url -> document
+	Map<Query,Map<String, Document>> queryDict; 
 
-    /**
-     * Set up average lengths for BM25, also handling PageRank.
-     */
-  public void calcAverageLengths() {
-    lengths = new HashMap<Document,Map<String,Double>>();
-    avgLengths = new HashMap<String,Double>();
-    pagerankScores = new HashMap<Document,Double>();
-    
-    /*
-     * TODO : Your code here
-     * Initialize any data structures needed, perform
-     * any preprocessing you would like to do on the fields,
-     * handle pagerank, accumulate lengths of fields in documents.        
-     */
-    
-    for (String tfType : this.TFTYPES) {
-    /*
-     * TODO : Your code here
-     * Normalize lengths to get average lengths for
-     * each field (body, url, title, header, anchor)
-     */
-    }
+	// BM25 data structures--feel free to modify these
+	// Document -> field -> length
+	Map<Document,Map<String,Double>> lengths;  
 
-  }
+	// field name -> average length
+	Map<String,Double> avgLengths;    
 
-  /**
-   * Get the net score. 
-   * @param tfs the term frequencies
-   * @param q the Query 
-   * @param tfQuery
-   * @param d the Document
-   * @return the net score
-   */
-  public double getNetScore(Map<String,Map<String, Double>> tfs, Query q, Map<String,Double> tfQuery,Document d) {
+	// Document -> pagerank score
+	Map<Document,Double> pagerankScores; 
 
-    double score = 0.0;
-    
-    /*
-     * TODO : Your code here
-     * Use equation 5 in the writeup to compute the overall score
-     * of a document d for a query q.
-     */
-    
-    return score;
-  }
+	/**
+	 * Construct a BM25Scorer.
+	 * @param idfs the map of idf scores
+	 * @param queryDict a map of query to url to document
+	 */
+	public BM25Scorer(Map<String,Double> idfs, Map<Query,Map<String, Document>> queryDict) {
+		super(idfs);
+		this.queryDict = queryDict;
+		this.calcAverageLengths();
+	}
 
-  /**
-   * Do BM25 Normalization.
-   * @param tfs the term frequencies
-   * @param d the Document
-   * @param q the Query
-   */
-  public void normalizeTFs(Map<String,Map<String, Double>> tfs,Document d, Query q) {
-  /*
-   * TODO : Your code here
-   * Use equation 3 in the writeup to normalize the raw term frequencies
-   * in fields in document d.
-   */
-  }
-  
-  /**
-   * Write the tuned parameters of BM25 to file.
-   * Only used for grading purpose, you should NOT modify this method.
-   * @param filePath the output file path.
-   */
-  private void writeParaValues(String filePath) {
-    try {
-      File file = new File(filePath);
-      if (!file.exists()) {
-        file.createNewFile();
-      }
-      FileWriter fw = new FileWriter(file.getAbsoluteFile());
-      String[] names = {
-        "urlweight", "titleweight", "bodyweight", 
-        "headerweight", "anchorweight", "burl", "btitle", 
-        "bheader", "bbody", "banchor", "k1", "pageRankLambda", "pageRankLambdaPrime"
-      };
-      double[] values = {
-        this.urlweight, this.titleweight, this.bodyweight, 
-        this.headerweight, this.anchorweight, this.burl, this.btitle, 
-        this.bheader, this.bbody, this.banchor, this.k1, this.pageRankLambda, 
-        this.pageRankLambdaPrime
-      };
-      BufferedWriter bw = new BufferedWriter(fw);
-      for (int idx = 0; idx < names.length; ++ idx) {
-        bw.write(names[idx] + " " + values[idx]);
-        bw.newLine();
-      }
-      bw.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
+	/**
+	 * Set up average lengths for BM25, also handling PageRank.
+	 */
+	public void calcAverageLengths() {
+		lengths = new HashMap<Document,Map<String,Double>>();
+		avgLengths = new HashMap<String,Double>();
+		pagerankScores = new HashMap<Document,Double>();
 
-  @Override
-  /**
-   * Get the similarity score.
-   * @param d the Document
-   * @param q the Query
-   * @return the similarity score
-   */
-  public double getSimScore(Document d, Query q) {
-    Map<String,Map<String, Double>> tfs = this.getDocTermFreqs(d,q);
-    this.normalizeTFs(tfs, d, q);
-    Map<String,Double> tfQuery = getQueryFreqs(q);
+		/*
+		 * TODO : Your code here
+		 * Initialize any data structures needed, perform
+		 * any preprocessing you would like to do on the fields,
+		 * handle pagerank, accumulate lengths of fields in documents.        
+		 */
 
-    // Write out the tuned BM25 parameters
-    // This is only used for grading purposes.
-    // You should NOT modify the writeParaValues method.
-    writeParaValues("bm25Para.txt");
-    return getNetScore(tfs,q,tfQuery,d);
-  }
-  
+		// Map fieldType -> number of instances of that field (non null) for calculating average
+
+
+		/*
+		 * TODO : Your code here
+		 * Normalize lengths to get average lengths for
+		 * each field (body, url, title, header, anchor)
+		 */
+
+		// initialize counter of lengths here, sum the lenghts
+		// per field, then divide after the loop over all the docs
+		for (String type : this.TFTYPES) {
+			avgLengths.put(type, 0.0);
+		}
+
+		int i = 0;
+		for (Query query : queryDict.keySet()) {
+			if (i++ == 1) break;
+			for (String url : queryDict.get(query).keySet()) {
+				Document doc = queryDict.get(query).get(url);
+				if (lengths.containsKey(doc)) continue;
+				// maps field -> length of it (for this doc)
+				Map<String, Double> fieldLengths = new HashMap<String,Double>();
+
+				String decodedUrl = this.decodedUrl(doc.url);
+				double urlLength = decodedUrl.split("\\W+").length;
+				double titleLength = doc.title != null ? doc.title.split("\\s+").length : 0;
+				double headerLength = doc.headers != null ? numTokensInList(doc.headers) : 0;
+				double bodyLength = doc.body_length;
+				double anchorLength = doc.anchors != null ? numTokensInList(doc.anchors.keySet()) : 0;
+
+
+				// Put the lengths for just the doc here
+				fieldLengths.put(URL, urlLength);
+				fieldLengths.put(TITLE, titleLength);
+				fieldLengths.put(HEADER, headerLength);
+				fieldLengths.put(BODY, bodyLength);
+				fieldLengths.put(ANCHOR, anchorLength);
+				lengths.put(doc, fieldLengths);
+
+				// Add the lengths in the global averager
+
+				for (String type : this.TFTYPES) {
+					avgLengths.put(type, avgLengths.get(type) + fieldLengths.get(type));
+				}
+			}
+
+		}
+		double numDocs = lengths.keySet().size();
+		for (String type : this.TFTYPES) {
+			double fieldTotal = avgLengths.get(type);
+			avgLengths.put(type, fieldTotal / numDocs);
+		}
+	}
+
+	private Double numTokensInList(Collection<String> fieldList) {
+		double length = 0;
+		for (String fieldString : fieldList) {
+			length += fieldString.split("\\s+").length;
+		}
+		return length;
+	}
+
+	/**
+	 * Get the net score. 
+	 * @param tfs the term frequencies
+	 * @param q the Query 
+	 * @param tfQuery
+	 * @param d the Document
+	 * @return the net score
+	 */
+	public double getNetScore(Map<String,Map<String, Double>> tfs, Query q, Map<String,Double> tfQuery,Document d) {
+
+		double score = 0.0;
+
+		/*
+		 * TODO : Your code here
+		 * Use equation 5 in the writeup to compute the overall score
+		 * of a document d for a query q.
+		 */
+
+		return score;
+	}
+
+	/**
+	 * Do BM25 Normalization.
+	 * @param tfs the term frequencies
+	 * @param d the Document
+	 * @param q the Query
+	 */
+	public void normalizeTFs(Map<String,Map<String, Double>> tfs,Document d, Query q) {
+		/*
+		 * TODO : Your code here
+		 * Use equation 3 in the writeup to normalize the raw term frequencies
+		 * in fields in document d.
+		 */
+	}
+
+	/**
+	 * Write the tuned parameters of BM25 to file.
+	 * Only used for grading purpose, you should NOT modify this method.
+	 * @param filePath the output file path.
+	 */
+	private void writeParaValues(String filePath) {
+		try {
+			File file = new File(filePath);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			FileWriter fw = new FileWriter(file.getAbsoluteFile());
+			String[] names = {
+					"urlweight", "titleweight", "bodyweight", 
+					"headerweight", "anchorweight", "burl", "btitle", 
+					"bheader", "bbody", "banchor", "k1", "pageRankLambda", "pageRankLambdaPrime"
+			};
+			double[] values = {
+					this.urlweight, this.titleweight, this.bodyweight, 
+					this.headerweight, this.anchorweight, this.burl, this.btitle, 
+					this.bheader, this.bbody, this.banchor, this.k1, this.pageRankLambda, 
+					this.pageRankLambdaPrime
+			};
+			BufferedWriter bw = new BufferedWriter(fw);
+			for (int idx = 0; idx < names.length; ++ idx) {
+				bw.write(names[idx] + " " + values[idx]);
+				bw.newLine();
+			}
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	/**
+	 * Get the similarity score.
+	 * @param d the Document
+	 * @param q the Query
+	 * @return the similarity score
+	 */
+	public double getSimScore(Document d, Query q) {
+		Map<String,Map<String, Double>> tfs = this.getDocTermFreqs(d,q);
+		this.normalizeTFs(tfs, d, q);
+		Map<String,Double> tfQuery = getQueryFreqs(q);
+
+		// Write out the tuned BM25 parameters
+		// This is only used for grading purposes.
+		// You should NOT modify the writeParaValues method.
+		writeParaValues("bm25Para.txt");
+		return getNetScore(tfs,q,tfQuery,d);
+	}
+
 }

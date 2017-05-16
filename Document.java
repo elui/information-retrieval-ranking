@@ -3,6 +3,8 @@ package edu.stanford.cs276;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.org.apache.bcel.internal.generic.ReturnInstruction;
+
 /**
  * The class is used to store useful information for a document. 
  * You can also write the document to a string for debugging.
@@ -25,6 +27,18 @@ public class Document {
 
 	// debug string for you to debug your implementation
 	public String debugStr = "";
+
+	@Override
+	public int hashCode() {
+		return this.url.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Document))
+			return false;
+		return this.url.equals(((Document)obj).url);
+	}
 
 	/** 
 	 * Constructs a document with a String url.

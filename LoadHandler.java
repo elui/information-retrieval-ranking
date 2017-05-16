@@ -2,6 +2,7 @@ package edu.stanford.cs276;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -9,7 +10,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -125,7 +125,7 @@ public class LoadHandler {
    * @param idfFile the file containing the idfs.
    * @return the term-doc counts
    */
-  public static Map<String,Double> buildDFs(String dataDir, String idfFile) {
+  public static Map<String,Double> buildDFs(String dataDir, String idfFile) throws IOException {
     // Get root directory
     String root = dataDir;
     File rootdir = new File(root);
@@ -133,9 +133,17 @@ public class LoadHandler {
       System.err.println("Invalid data directory: " + root);
       return null;
     }
+    
+    FileFilter filter = new FileFilter() {
+		@Override
+		public boolean accept(File pathname) {
+			String name = pathname.getName();
+			return !name.startsWith(".");
+		}
+	};
 
     // Array of all the blocks (sub directories) in the PA1 corpus
-    File[] dirlist = rootdir.listFiles();
+    File[] dirlist = rootdir.listFiles(filter);
 
     int totalDocCount = 0;
 
@@ -150,6 +158,33 @@ public class LoadHandler {
      * Hint: consult PA1 for how to load each file in each block
      */
     
+	for (File block : dirlist) {
+		File blockDir = new File(root, block.getName());
+		File[] filelist = blockDir.listFiles(filter);
+		for (File file : filelist) {
+			totalDocCount++;
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				String[] tokens = line.trim().split("\\s+");
+				Set<String> documentTerms = new HashSet<String>();
+				for (String token : tokens) {
+					Double tokenCount = termDocCount.get(token);
+
+					if (documentTerms.contains(token)) continue; // we only count a token once per document
+
+					if (tokenCount != null) {
+						termDocCount.put(token, tokenCount + 1);
+					} else {
+						termDocCount.put(token, 1d);
+					}
+					documentTerms.add(token);
+				}
+			}
+			reader.close();
+		}
+	}
+
     // Compute inverse document frequencies using document frequencies
     for (String term : termDocCount.keySet()) {
       /*
@@ -159,7 +194,12 @@ public class LoadHandler {
        * Thus to guard against such a case, we will apply 
        * Laplace add-one smoothing.
        */
+    	Double termCount = termDocCount.get(term);
+    	Double idf = Math.log((totalDocCount+1) / (termCount + 1));
+    	termDocCount.put(term, idf);
     }
+    
+    termDocCount.put(UNSEEN_TERM, Math.log(totalDocCount + 1));
     
     // Save to file
     try {
@@ -173,5 +213,7 @@ public class LoadHandler {
     }
     return termDocCount;
   }
+  
+  public static String UNSEEN_TERM = "*|*unseen_term*|*";
 
 }
