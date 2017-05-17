@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.stanford.cs276.util.Pair;
+
 /**
  * Skeleton code for the implementation of a BM25 Scorer in Task 2.
  */
@@ -16,22 +18,45 @@ public class BM25Scorer extends AScorer {
 	/*
 	 *  TODO: You will want to tune these values
 	 */
-	double urlweight = 0.1;
-	double titleweight  = 0.1;
+//	double urlweight = 0.15;
+//	double titleweight  = 0.13;
+//	double bodyweight = 0.05;
+//	double headerweight = 0.15;
+//	double anchorweight = 0.15;
+	
+	double urlweight = 5.0;
+	double titleweight = 4.0;
 	double bodyweight = 0.1;
-	double headerweight = 0.1;
-	double anchorweight = 0.1;
+	double headerweight = 0.8;
+	double anchorweight = 5.0;
+	
+	
+	Map<String,Double> bm25FieldWeightMap;
 
 	// BM25-specific weights
-	double burl = 0.1;
-	double btitle = 0.1;
-	double bheader = 0.1;
-	double bbody = 0.1;
+//	double burl = 0.001;
+//	double btitle = 0.1;
+//	double bheader = 0.1;
+//	double bbody = 0.1;
+//	double banchor = 0.1;
+	
+	double burl = 1.4;
+	double btitle = 1.5;
+	double bheader = 0.5;
+	double bbody = 0.75;
 	double banchor = 0.1;
-
-	double k1 = 0.1;
-	double pageRankLambda = 0.1;
-	double pageRankLambdaPrime = 0.1;
+	
+	Map<String, Double> bm25BWeightMap; 
+		
+//	double k1 = 0.1;
+//	double pageRankLambda = .1;
+//	double pageRankLambdaPrime = .1;
+//	double pageRankLambda2Prime = .1;
+	
+	double k1 = 1;
+	double pageRankLambda = 1.2;
+	double pageRankLambdaPrime = 0.25;
+	double pageRankLambdaTwoPrime = 4.0;
 
 	// query -> url -> document
 	Map<Query,Map<String, Document>> queryDict; 
@@ -45,6 +70,10 @@ public class BM25Scorer extends AScorer {
 
 	// Document -> pagerank score
 	Map<Document,Double> pagerankScores; 
+	
+	// Pair(term, Document) -> weight (w[d,t])
+	Map<Pair<String, Document>, Double> termDocWeightMap;
+	
 
 	/**
 	 * Construct a BM25Scorer.
@@ -54,7 +83,27 @@ public class BM25Scorer extends AScorer {
 	public BM25Scorer(Map<String,Double> idfs, Map<Query,Map<String, Document>> queryDict) {
 		super(idfs);
 		this.queryDict = queryDict;
+		this.initializeWeightMaps();
 		this.calcAverageLengths();
+	}
+	
+	public void initializeWeightMaps() {
+		termDocWeightMap = new HashMap<Pair<String, Document>, Double>();
+		
+		
+		bm25BWeightMap = new HashMap<String,Double>();
+		bm25BWeightMap.put(URL, burl);
+		bm25BWeightMap.put(TITLE, btitle);
+		bm25BWeightMap.put(HEADER, bheader);
+		bm25BWeightMap.put(BODY, bbody);
+		bm25BWeightMap.put(ANCHOR, banchor);
+		
+		bm25FieldWeightMap = new HashMap<String,Double>();
+		bm25FieldWeightMap.put(URL, urlweight);
+		bm25FieldWeightMap.put(TITLE, titleweight);
+		bm25FieldWeightMap.put(HEADER, headerweight);
+		bm25FieldWeightMap.put(BODY, bodyweight);
+		bm25FieldWeightMap.put(ANCHOR, anchorweight);
 	}
 
 	/**
@@ -72,7 +121,7 @@ public class BM25Scorer extends AScorer {
 		 * handle pagerank, accumulate lengths of fields in documents.        
 		 */
 
-		// Map fieldType -> number of instances of that field (non null) for calculating average
+		
 
 
 		/*
@@ -87,22 +136,25 @@ public class BM25Scorer extends AScorer {
 			avgLengths.put(type, 0.0);
 		}
 
-		int i = 0;
+		int docCounter = 0;
 		for (Query query : queryDict.keySet()) {
-			if (i++ == 1) break;
 			for (String url : queryDict.get(query).keySet()) {
 				Document doc = queryDict.get(query).get(url);
-				if (lengths.containsKey(doc)) continue;
+
+//				if (lengths.containsKey(doc)) continue;
 				// maps field -> length of it (for this doc)
 				Map<String, Double> fieldLengths = new HashMap<String,Double>();
 
 				String decodedUrl = this.decodedUrl(doc.url);
-				double urlLength = decodedUrl.split("\\W+").length;
+				double urlLength = decodedUrl.split("[^A-Za-z0-9\\s]").length;
 				double titleLength = doc.title != null ? doc.title.split("\\s+").length : 0;
 				double headerLength = doc.headers != null ? numTokensInList(doc.headers) : 0;
 				double bodyLength = doc.body_length;
 				double anchorLength = doc.anchors != null ? numTokensInList(doc.anchors.keySet()) : 0;
-
+//				double anchorLength = doc.anchors != null ? 
+//						doc.anchors.keySet().stream()
+//						.mapToDouble(anchorStr -> anchorStr.split("\\s+").length)
+//						.count() : 0;
 
 				// Put the lengths for just the doc here
 				fieldLengths.put(URL, urlLength);
@@ -112,18 +164,20 @@ public class BM25Scorer extends AScorer {
 				fieldLengths.put(ANCHOR, anchorLength);
 				lengths.put(doc, fieldLengths);
 
+				docCounter++;
+
 				// Add the lengths in the global averager
 
 				for (String type : this.TFTYPES) {
-					avgLengths.put(type, avgLengths.get(type) + fieldLengths.get(type));
+					double updatedTotal = avgLengths.get(type) + fieldLengths.get(type);
+					avgLengths.put(type, updatedTotal);
 				}
 			}
-
 		}
-		double numDocs = lengths.keySet().size();
 		for (String type : this.TFTYPES) {
 			double fieldTotal = avgLengths.get(type);
-			avgLengths.put(type, fieldTotal / numDocs);
+			avgLengths.put(type, fieldTotal / docCounter);
+//			avgLengths.put(type, fieldTotal / lengths.size());
 		}
 	}
 
@@ -152,6 +206,20 @@ public class BM25Scorer extends AScorer {
 		 * Use equation 5 in the writeup to compute the overall score
 		 * of a document d for a query q.
 		 */
+		
+//		double nonTextualScore = pageRankLambda * Math.log10(pageRankLambdaPrime + d.page_rank);
+		double nonTextualScore = pageRankLambda * (1 / (pageRankLambdaPrime + Math.exp(-1 * d.page_rank * pageRankLambdaTwoPrime)));
+		
+		for (String queryTerm : q.processedQueryWords()) {
+			double termWeight = termDocWeightMap.get(new Pair<String,Document>(queryTerm, d));
+
+			Double idfWeight = idfs.get(queryTerm);
+			idfWeight = idfWeight == null ? idfs.get(LoadHandler.UNSEEN_TERM) : idfWeight;
+
+			score += (termWeight * idfWeight) / (k1 + termWeight);
+			
+		}
+		score += nonTextualScore;
 
 		return score;
 	}
@@ -168,6 +236,31 @@ public class BM25Scorer extends AScorer {
 		 * Use equation 3 in the writeup to normalize the raw term frequencies
 		 * in fields in document d.
 		 */
+
+
+		for (String queryTerm : q.processedQueryWords()) {
+
+			double termDocWeight = 0;
+			Pair<String, Document> queryDocPair = new Pair<String,Document>(queryTerm, d);
+
+			for (String field : this.TFTYPES) {
+				Double lenDocField = lengths.get(d).get(field);
+				Double avgLenField = avgLengths.get(field);
+				Double B = bm25BWeightMap.get(field);
+
+				double rawFreq = tfs.get(field).get(queryTerm);
+				
+				double ftf = avgLenField == 0 || avgLenField == null ? 0 : 
+					rawFreq / (1 + B * ((lenDocField / avgLenField) - 1));
+				termDocWeight += bm25FieldWeightMap.get(field) * ftf;
+			}
+			
+			termDocWeightMap.put(queryDocPair, termDocWeight);
+			
+			
+		}
+	
+
 	}
 
 	/**

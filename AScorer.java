@@ -114,7 +114,7 @@ public abstract class AScorer {
 //			e.printStackTrace();
 //		}
 		String decodedUrl = decodedUrl(d.url);
-		String[] tokenizedUrl = decodedUrl.split("\\W+");
+		String[] tokenizedUrl = decodedUrl.split("[^A-Za-z0-9\\s]");
 		Map<String, Double> urlCounts = stringToCounts(tokenizedUrl);
 		Map<String, Double> urlTermFreqs = tokenizedStrToQueryCounts(q, urlCounts);
 

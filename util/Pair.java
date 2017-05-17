@@ -26,6 +26,7 @@ public class Pair<F, S> {
     this.second = val;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -43,6 +44,7 @@ public class Pair<F, S> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (first != null ? first.hashCode() : 0);

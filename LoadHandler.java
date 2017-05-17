@@ -195,11 +195,11 @@ public class LoadHandler {
        * Laplace add-one smoothing.
        */
     	Double termCount = termDocCount.get(term);
-    	Double idf = Math.log((totalDocCount+1) / (termCount + 1));
+    	Double idf = Math.log10((totalDocCount+1) / (termCount + 1));
     	termDocCount.put(term, idf);
     }
     
-    termDocCount.put(UNSEEN_TERM, Math.log(totalDocCount + 1));
+    termDocCount.put(UNSEEN_TERM, Math.log10(totalDocCount + 1));
     
     // Save to file
     try {
