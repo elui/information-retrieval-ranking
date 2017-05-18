@@ -87,6 +87,7 @@ public class Rank {
 			for (Pair<Document,Double> docAndScore : docAndScores)
 				curRankings.add(docAndScore.getFirst());
 			queryRankings.put(query, curRankings);
+//			break;
 		}
 		return queryRankings;
 	}
